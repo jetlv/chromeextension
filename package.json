@@ -1,0 +1,23 @@
+{
+  "name": "chromeextension",
+  "version": "1.0.0",
+  "description": "Richard's project",
+  "main": "index.js",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "cheerio": "^0.22.0",
+    "html-word-count": "^1.0.0",
+    "selenium-webdriver": "^2.53.3",
+    "validator": "^7.0.0",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "="
+  ],
+  "author": "\\",
+  "license": "ISC"
+}
