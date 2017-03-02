@@ -5,16 +5,28 @@ var phantomJs = require('selenium-webdriver/phantomjs');
 var fs = require('fs');
 var cheerio = require('cheerio');
 var count = require('html-word-count');
+var wordMatcher = require('word-regex');
+var density = require('./density.js');
 
-
-function singleQuery(url) {
+/**
+ *
+ * @param url target url
+ * @param kw  keyword for density calculation
+ * @returns {!ManagedPromise.<R>|*|Promise.<TResult>}
+ */
+function singleQuery(url, kw) {
     var driver = new webdriver.Builder().forBrowser('phantomjs').build();
     return driver.get(url).then(function () {
         return driver.wait(function () {
             return driver.getPageSource().then(function (source) {
                 var $ = cheerio.load(source);
                 var title = $('title').text();
-                var wordCount = count($('body').html());
+                var bodyHtml = $('body').html();
+                var wordCount = count(bodyHtml);
+                var kwDensity = null;
+                if(kw) {
+                    kwDensity = density(bodyHtml, kw);
+                }
                 var metaContent = $('meta[name="description"]').attr('content');
                 var canonical = $('link[rel="canonical"]').attr('href');
                 var noindex = "no";
@@ -33,6 +45,12 @@ function singleQuery(url) {
                     noindex: noindex,
                     wordCount: wordCount
                 };
+                if(kw) {
+                    optJson.density = {
+                        keyword : kw,
+                        keywordDensity : kwDensity
+                    }
+                }
                 var tagIndexArray = [1, 2, 3, 4];
                 tagIndexArray.forEach(function (tagNum, index, array) {
                     optJson['h' + tagNum] = [];

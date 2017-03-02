@@ -15,6 +15,7 @@ const requestHandler = (request, response) => {
     /**  parse url */
     var queryObject = url.parse(reqUrl, true).query;
     var link = queryObject.link;
+    var kw = queryObject.keyword;
     if (!link) {
         response.end(JSON.stringify({
             code: errorCode,
@@ -31,7 +32,7 @@ const requestHandler = (request, response) => {
         }));
         return;
     }
-    fetcher(link).then(function (optJson) {
+    fetcher(link, kw).then(function (optJson) {
         // console.log(optJson);
         response.end(JSON.stringify({
             code: correctCode,
