@@ -9,32 +9,37 @@ var wordMatcher = require('word-regex');
 var density = require('./density.js');
 
 /**
- *
+ * @param driver phantomjs driver
  * @param url target url
  * @param kw  keyword for density calculation
  * @returns {!ManagedPromise.<R>|*|Promise.<TResult>}
  */
-function singleQuery(url, kw) {
-    var driver = new webdriver.Builder().forBrowser('phantomjs').build();
+function singleQuery(driverEntity, url, kw) {
+    let driver = driverEntity.driver;
+    driverEntity.busy = 1;
     return driver.get(url).then(function () {
         return driver.wait(function () {
             return driver.getPageSource().then(function (source) {
                 var $ = cheerio.load(source);
-                driver.quit();
+                // driver.quit();
+                driverEntity.busy = 0;
+                if(driverEntity.tag == 1) {
+                    driver.quit();
+                }
                 var title = $('title').text();
                 var bodyHtml = $('body').html();
                 var wordCount = count(bodyHtml);
                 var kwDensity = null;
-                if(kw && bodyHtml) {
+                if (kw && bodyHtml) {
                     kwDensity = density(bodyHtml, kw);
                 }
                 var metaContent = $('meta[name="description"]').attr('content');
                 var canonical = $('link[rel="canonical"]').attr('href');
                 var noindex = "no";
                 var robots = $('meta[name="robots"]');
-                if(robots.length > 0) {
+                if (robots.length > 0) {
                     var content = robots.eq(0).attr('content');
-                    if(content.indexOf('noindex') !== -1) {
+                    if (content.indexOf('noindex') !== -1) {
                         noindex = 'yes';
                     }
                 }
@@ -46,10 +51,10 @@ function singleQuery(url, kw) {
                     noindex: noindex,
                     wordCount: wordCount
                 };
-                if(kw) {
+                if (kw) {
                     optJson.density = {
-                        keyword : kw,
-                        keywordDensity : kwDensity
+                        keyword: kw,
+                        keywordDensity: kwDensity
                     }
                 }
                 var tagIndexArray = [1, 2, 3, 4];
@@ -68,5 +73,22 @@ function singleQuery(url, kw) {
     });
 }
 
-module.exports = singleQuery;
+/**
+ * @tag 0 for default, 1 for appended
+ * @returns {{busy: number, driver: !webdriver.WebDriver}}
+ * Create a new phantomjs driver
+ */
+function createNewDriver(tag) {
+    var driver = new webdriver.Builder().forBrowser('phantomjs').build();
+    return {
+        busy: 0,
+        driver: driver,
+        tag : tag
+    }
+}
+
+module.exports = {
+    singleQuery: singleQuery,
+    newDriver: createNewDriver
+}
 

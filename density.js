@@ -15,6 +15,9 @@ function density(html, keyword) {
         ignoreHref: true
     });
     var keywords = text.match(regex);
+    if(keywords.length == 0) {
+        return 0;
+    }
     var count = 0;
     keywords.forEach(function (kw, index, element) {
         if (kw.toLowerCase() == keyword.toLowerCase()) {
