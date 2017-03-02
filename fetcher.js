@@ -17,7 +17,14 @@ function singleQuery(url) {
                 var wordCount = count($('body').html());
                 var metaContent = $('meta[name="description"]').attr('content');
                 var canonical = $('link[rel="canonical"]').attr('href');
-                var noindex = ($('meta[name="robots"][content="noindex"]').length > 0) ? 'yes' : 'no';
+                var noindex = "no";
+                var robots = $('meta[name="robots"]');
+                if(robots.length > 0) {
+                    var content = robots.eq(0).attr('content');
+                    if(content.indexOf('noindex') !== -1) {
+                        noindex = 'yes';
+                    }
+                }
                 var optJson = {
                     url: url,
                     title: title,
@@ -32,6 +39,7 @@ function singleQuery(url) {
                     $('h' + tagNum).each(function (index, element) {
                         optJson['h' + tagNum].push($(this).text());
                     });
+                    optJson['h' + tagNum + ' count'] = $('h' + tagNum).length;
                 });
                 // fs.writeFileSync('opt_' + url.match(/(\w+)\.com/)[0] + '.json', JSON.stringify(optJson));
                 driver.quit();
