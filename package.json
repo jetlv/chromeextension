@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "bluebird": "^3.4.7",
+    "broken-link-checker": "^0.7.4",
     "cheerio": "^0.22.0",
     "html-word-count": "^1.0.0",
     "selenium-webdriver": "^2.53.3",

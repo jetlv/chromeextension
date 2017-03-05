@@ -1,11 +1,10 @@
-/**
- * Created by Administrator on 2017/3/3.
- */
 
 let blc = require('broken-link-checker');
 var fs = require('fs');
 
-let options = {}
+let options = {
+    honorRobotExclusions : false
+}
 let all = [];
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
@@ -14,6 +13,11 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     junk: function (result, customData) {
     },
     link: function (result, customData) {
+        if (result.broken) {
+            console.log(blc[result.brokenReason]);
+        } else if (result.excluded) {
+            console.log(blc[result.excludedReason]);
+        }
         all.push(result);
     },
     page: function (error, pageUrl, customData) {
