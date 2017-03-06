@@ -4,7 +4,8 @@ let config = require('./configuration.js');
 let options = {
     honorRobotExclusions: false,
     maxSocketsPerHost: config.brokenCheckerThreads,
-    filterLevel: 3
+    filterLevel: config.filterLevel,
+    cacheResponses: true
 }
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
@@ -18,32 +19,48 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
             let resolvedUrl = result.url.resolved;
             let brokenReason = result.brokenReason;
             let opt = {
-                originalUrl : originalUrl,
-                resolvedUrl : resolvedUrl,
-                brokenReason : brokenReason
+                originalUrl: originalUrl,
+                resolvedUrl: resolvedUrl,
+                brokenReason: brokenReason
             }
-            customData.brokenUrls.push(opt);
+            if (result.internal) {
+                customData.internalBrokenUrls.list.push(opt);
+            } else {
+                customData.externalBrokenUrls.list.push(opt);
+            }
         }
     },
     page: function (error, pageUrl, customData) {
         let response = customData.response;
-        let brokenUrls = customData.brokenUrls;
-        console.log(brokenUrls.length);
+        let internalLinks = customData.internalBrokenUrls.list;
+        let externalLinks = customData.externalBrokenUrls.list;
+        let internalCount = internalLinks.length;
+        let externalCount = externalLinks.length;
         response.end(JSON.stringify({
             code: 1,
-            brokenUrls: brokenUrls
+            brokenInternalLink: {
+                count: internalCount,
+                list: internalLinks
+            },
+            brokenExternalLink: {
+                count: externalCount,
+                list: externalLinks
+            }
         }));
     },
     end: function (customData) {
-
     }
 });
 
 let brokenFetcher = (link, response) => {
-    htmlUrlChecker.enqueue(link, {
+    let customEntity = {
         response: response,
-        brokenUrls: []
-    });
+        internalBrokenUrls: {},
+        externalBrokenUrls: {}
+    }
+    customEntity.internalBrokenUrls.list = [];
+    customEntity.externalBrokenUrls.list = [];
+    htmlUrlChecker.enqueue(link, customEntity);
 }
 
 module.exports = brokenFetcher
