@@ -18,7 +18,7 @@ function density(bodyText, html, keyword) {
     if (keywords.length == 0) {
         return 0;
     }
-    let isPhrase = keyword.split('\r\n').length > 0 ? true : false;
+    let isPhrase = keyword.split('\r\n').length > 1 ? true : false;
     if(!isPhrase) {
         var count = 0;
         keywords.forEach(function (kw, index, element) {
