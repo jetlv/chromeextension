@@ -14,7 +14,7 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     junk: function (result, customData) {
     },
     link: function (result, customData) {
-        if (result.broken) {
+        if (result.broken && (result.brokenReason == 'HTTP_404')) {
             let originalUrl = result.url.original;
             let resolvedUrl = result.url.resolved;
             let brokenReason = result.brokenReason;
