@@ -9,7 +9,7 @@ var fs = require('fs');
 const regex = /[a-zA-Z0-9_\u0392-\u03c9\u0400-\u04FF]+|[\u4E00-\u9FFF\u3400-\u4dbf\uf900-\ufaff\u3040-\u309f\uac00-\ud7af\u0400-\u04FF]+|\w+/g
 
 function density(bodyText, html, keyword) {
-    fs.writeFileSync('body.text', bodyText);
+    // fs.writeFileSync('body.text', bodyText);
     var text = htmlToText.fromString(html, {
         wordwrap: false,
         ignoreImage: true,
@@ -32,7 +32,7 @@ function density(bodyText, html, keyword) {
         return percentDensity;
     } else {
         let matched = bodyText.match(new RegExp(keyword.toString(), "ig"));
-        fs.writeFileSync('bodytext.txt', bodyText);
+        // fs.writeFileSync('bodytext.txt', bodyText);
         let count = matched ? matched.length : 0;
         let realDensity = count / keywords.length;
         let percentDensity = (100 * realDensity).toFixed(2);

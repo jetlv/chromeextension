@@ -46,8 +46,8 @@ function singleQuery(driverEntity, url, kw) {
                 }
                 var optJson = {
                     url: url,
-                    title: title,
-                    metaContent: metaContent ? metaContent : null,
+                    title: title.trim(),
+                    metaContent: metaContent ? metaContent.trim() : null,
                     canonical: canonical ? canonical : null,
                     noindex: noindex,
                     wordCount: wordCount
@@ -62,7 +62,7 @@ function singleQuery(driverEntity, url, kw) {
                 tagIndexArray.forEach(function (tagNum, index, array) {
                     optJson['h' + tagNum] = [];
                     $('h' + tagNum).each(function (index, element) {
-                        optJson['h' + tagNum].push($(this).text());
+                        optJson['h' + tagNum].push($(this).text().trim());
                     });
                     optJson['h' + tagNum + ' count'] = $('h' + tagNum).length;
                 });
