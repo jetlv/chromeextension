@@ -1,4 +1,5 @@
 const http = require('http')
+require('http-shutdown').extend();
 const url = require('url')
 const fetcher = require('./fetcher.js');
 const validator = require('validator');
@@ -15,6 +16,15 @@ const correctCode = 1;
 let allDrivers = [];
 let allResponse = {};
 let singleQuery = fetcher.singleQuery;
+
+/** clean stuff **/
+process.on("SIGINT", function () {
+    console.log("got SIGINT");
+    server.shutdown(function() {
+        console.log('Everything is cleanly shutdown.');
+        process.exit(0);
+    });
+});
 
 /**
  * Handle seo information
@@ -119,7 +129,7 @@ const requestHandler = (request, response) => {
 }
 
 
-const server = http.createServer(requestHandler)
+const server = http.createServer(requestHandler).withShutdown();
 
 server.listen(port, (err) => {
     if (err) {
