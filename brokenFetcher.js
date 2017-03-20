@@ -1,9 +1,15 @@
 let blc = require('broken-link-checker');
 let config = require('./configuration.js');
 
+/**
+ *
+ * @type {{honorRobotExclusions: boolean, maxSocketsPerHost: number, filterLevel: number, cacheResponses: boolean}}
+ * checker's options, see https://github.com/stevenvachon/broken-link-checker
+ */
 let options = {
     honorRobotExclusions: false,
-    maxSocketsPerHost: config.brokenCheckerThreads,
+    maxSocketsPerHost: config.maxSocketsPerHost,
+    maxSockets : config.maxSockets,
     filterLevel: config.filterLevel,
     cacheResponses: true
 }
