@@ -9,6 +9,7 @@
     "cheerio": "^0.22.0",
     "html-word-count": "^1.0.0",
     "http-shutdown": "^1.2.0",
+    "request-promise": "^4.2.0",
     "selenium-webdriver": "^2.53.3",
     "validator": "^7.0.0",
     "winston": "^2.3.1"

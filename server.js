@@ -1,15 +1,26 @@
 const http = require('http')
 require('http-shutdown').extend();
 const url = require('url')
+const winston = require('winston');
 const fetcher = require('./fetcher.js');
 const validator = require('validator');
 const config = require('./configuration.js');
 const brokenFetcher = require('./brokenFetcher.js');
 
+var logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.File)({
+            name: 'error-file',
+            filename: 'filelog-error.log',
+            level: 'error'
+        })
+    ]
+});
+
 /** default port is 3000 */
-const port = 3000
+const port = 3000;
 /** 10000 as code wound be returned if request would not be completed successfully */
-const errorCode = 10000;
+const errorCode = config.code_system;
 /** 1 as code wound be returned if request completed well */
 const correctCode = 1;
 /** driver store*/
@@ -20,7 +31,7 @@ let singleQuery = fetcher.singleQuery;
 /** clean stuff **/
 process.on("SIGINT", function () {
     console.log("got SIGINT");
-    server.shutdown(function() {
+    server.shutdown(function () {
         console.log('Everything is cleanly shutdown.');
         process.exit(0);
     });
@@ -81,12 +92,33 @@ const seoHandler = (request, response) => {
             }));
         }
     } else {
+        //Only in this block, script will run on fetcher
         singleQuery(driverEntity, link, kw).then(function (optJson) {
-            response.end(JSON.stringify({
-                code: correctCode,
-                result: optJson
-            }));
-        });
+                if (optJson.error) {
+                    if (optJson.message == 'TimeoutError') {
+                        response.end(JSON.stringify({
+                            code: config.code_siteDown,
+                            result: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
+                        }));
+                    } else if (optJson.message == '404') {
+                        response.end(JSON.stringify({
+                            code: config.code_404,
+                            result: 'Page not found'
+                        }));
+                    } else {
+                        response.end(JSON.stringify({
+                            code: config.code_unknown,
+                            result: 'unknown error'
+                        }))
+                    }
+                } else {
+                    response.end(JSON.stringify({
+                        code: correctCode,
+                        result: optJson
+                    }));
+                }
+            }
+        );
     }
 
 }
@@ -144,3 +176,14 @@ server.listen(port, (err) => {
     console.log(`scraper server is listening on ${port}`)
     console.log(allDrivers.length + ' instances are running');
 })
+let reqTimeout = config.reqTimeout;
+if (!reqTimeout) {
+    reqTimeout = 60000; //Default value is 60000
+}
+server.timeout = reqTimeout;
+
+server.on('connection', (socket) => {
+    socket.on('error', (error) => {
+        logger.log(error);
+    });
+});
