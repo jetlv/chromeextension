@@ -17,23 +17,27 @@ const rp = require('request-promise');
  * @returns {!ManagedPromise.<R>|*|Promise.<TResult>}
  */
 function singleQuery(driverEntity, url, kw) {
-    return httpChecker(url, 404).then(function (notfound) {
-        if (notfound) {
+    driverEntity.busy = 1;
+    global.runningDrivers++;
+    return checkResponseCode(url).then(function (statusCode) {
+        if (statusCode >= 400) {
+            if (statusCode == 999) {
+                statusCode = 'TimeoutError';
+            }
             return {
-                error: 1, //Tell server there is an error
-                message: '404'
+                error: config.code_badResponse,
+                message: statusCode
             }
         }
         else {
             let driver = driverEntity.driver;
-            driverEntity.busy = 1;
+
             return driver.manage().timeouts().pageLoadTimeout(config.pageLoadTimeout).then(function () {
                 return driver.get(url).then(function () {
                     return driver.wait(function () {
                         return driver.getPageSource().then(function (source) {
                             var $ = cheerio.load(source);
                             // driver.quit();
-                            driverEntity.busy = 0;
                             if (driverEntity.tag == 1) {
                                 driver.quit();
                             }
@@ -85,7 +89,7 @@ function singleQuery(driverEntity, url, kw) {
                 });
             }).catch(function (err) {
                 return {
-                    error: 1, //Tell server there is an error
+                    error: 1,
                     message: err.name
                 }
             });
@@ -129,7 +133,27 @@ function httpChecker(url, statusCode) {
     });
 }
 
+/**
+ * check http response code
+ * @param url
+ * @returns {*}
+ */
+function checkResponseCode(url) {
+    let options = {
+        method: 'GET',
+        uri: url,
+        simple: false,
+        resolveWithFullResponse: true,
+        timeout: config.pageLoadTimeout
+    }
+    return rp(options).then(function (response) {
+        return response.statusCode;
+    }).catch(function (err) {
+        return 999;
+    });
+}
+
 module.exports = {
     newDriver: createNewDriver,
-    singleQuery : singleQuery
+    singleQuery: singleQuery
 }

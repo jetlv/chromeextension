@@ -24,9 +24,14 @@ const errorCode = config.code_system;
 /** 1 as code wound be returned if request completed well */
 const correctCode = 1;
 /** driver store*/
+if (config.debug == 0) {
+    console.log = function () {
+    };
+}
 let allDrivers = [];
 let allResponse = {};
 let singleQuery = fetcher.singleQuery;
+global.runningDrivers = config.defaultDriverNumber;
 
 /** clean stuff **/
 process.on("SIGINT", function () {
@@ -37,12 +42,15 @@ process.on("SIGINT", function () {
     });
 });
 
+process.setMaxListeners(0); //Since we are going to set up many phantomjs drivers, so there are many listeners would be triggered, so cancel limit of listeners
+
 /**
  * Handle seo information
  * @param request
  * @param response
  */
 const seoHandler = (request, response) => {
+    console.log(global.runningDrivers + ' drivers are running');
     /** replace circle*/
     var reqUrl = request.url
     /**  parse url */
@@ -66,50 +74,83 @@ const seoHandler = (request, response) => {
         return;
     }
     let driverEntity = null;
-    // console.log(allDrivers);
+    // console.log(allDrivers);;
     allDrivers.forEach(function (entity, index, array) {
         if (entity.busy == 0) {
             driverEntity = entity;
         }
     });
     if (!driverEntity) {
-        if (allDrivers.length < config.maxDriverNumber) {
+        if (global.runningDrivers < config.maxDriverNumber) {
             let newDriver = fetcher.newDriver(1);
-            allDrivers.push(newDriver);
-            console.log('New driver created  - ' + allDrivers.length + ' drivers here');
+            // allDrivers.push(newDriver);
+            console.log('New driver created  - ' + global.runningDrivers + ' drivers here');
             singleQuery(newDriver, link, kw).then(function (optJson) {
-                let index = allDrivers.indexOf(newDriver);
-                allDrivers.splice(index, 1);
-                response.end(JSON.stringify({
-                    code: correctCode,
-                    result: optJson
-                }));
-            });
-        } else {
-            response.end(JSON.stringify({
-                code: errorCode,
-                result: "too many requests, please retry later"
-            }));
-        }
-    } else {
-        //Only in this block, script will run on fetcher
-        singleQuery(driverEntity, link, kw).then(function (optJson) {
+                // let index = allDrivers.indexOf(newDriver);
+                // allDrivers.splice(index, 1);
+                //The only correct entry
+                newDriver.busy = 0;
+                global.runningDrivers--;
+                console.log('quit a driver, now ' + global.runningDrivers + ' drivers');
+                if (newDriver.tag == 1) {
+                    newDriver = null;
+                }
                 if (optJson.error) {
                     if (optJson.message == 'TimeoutError') {
                         response.end(JSON.stringify({
                             code: config.code_siteDown,
-                            result: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
+                            message: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
                         }));
-                    } else if (optJson.message == '404') {
+                    } else if (optJson.error == config.code_badResponse) {
                         response.end(JSON.stringify({
-                            code: config.code_404,
-                            result: 'Page not found'
+                            code: config.code_badResponse,
+                            message: optJson.message
                         }));
                     } else {
+                        console.log(optJson.message);
                         response.end(JSON.stringify({
                             code: config.code_unknown,
-                            result: 'unknown error'
-                        }))
+                            message: 'unknown error'
+                        }));
+                    }
+                } else {
+                    response.end(JSON.stringify({
+                        code: correctCode,
+                        result: optJson
+                    }));
+                }
+            });
+        } else {
+            response.end(JSON.stringify({
+                code: errorCode,
+                message: "too many requests, please retry later"
+            }));
+        }
+    } else {
+        singleQuery(driverEntity, link, kw).then(function (optJson) {
+                driverEntity.busy = 0;
+                global.runningDrivers--;
+                console.log('quit a driver, now ' + global.runningDrivers + ' drivers');
+                if (driverEntity.tag == 1) {
+                    driverEntity = null;
+                }
+                if (optJson.error) {
+                    if (optJson.message == 'TimeoutError') {
+                        response.end(JSON.stringify({
+                            code: config.code_siteDown,
+                            message: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
+                        }));
+                    } else if (optJson.error == config.code_badResponse) {
+                        response.end(JSON.stringify({
+                            code: config.code_badResponse,
+                            message: optJson.message
+                        }));
+                    } else {
+                        console.log(optJson.message);
+                        response.end(JSON.stringify({
+                            code: config.code_unknown,
+                            message: 'unknown error'
+                        }));
                     }
                 } else {
                     response.end(JSON.stringify({
