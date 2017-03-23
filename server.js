@@ -7,7 +7,7 @@ const validator = require('validator');
 const config = require('./configuration.js');
 const brokenFetcher = require('./brokenFetcher.js');
 
-var logger = new (winston.Logger)({
+let logger = new (winston.Logger)({
     transports: [
         new (winston.transports.File)({
             name: 'error-file',
@@ -138,7 +138,7 @@ const seoHandler = (request, response) => {
                     if (optJson.message == 'TimeoutError') {
                         response.end(JSON.stringify({
                             code: config.code_siteDown,
-                            message: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
+                            message: 'Server was unable to response, seems the server was done'
                         }));
                     } else if (optJson.error == config.code_badResponse) {
                         response.end(JSON.stringify({

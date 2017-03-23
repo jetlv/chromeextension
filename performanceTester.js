@@ -17,7 +17,7 @@ Promise.map(ar, function (id) {
         // console.log(body);
         console.log(id + ' was done with code ' + body.code);
     });
-}, {concurrency: 6});
+}, {concurrency: 10});
 //
 // let test = [1, 2, 3, 4 ,5];
 // let index = test.indexOf(3);

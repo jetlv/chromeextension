@@ -9,6 +9,17 @@ var wordMatcher = require('word-regex');
 var density = require('./density.js');
 const config = require('./configuration.js');
 const rp = require('request-promise');
+const winston = require('winston');
+
+let logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.File)({
+            name: 'error-file',
+            filename: 'filelog-error.log',
+            level: 'error'
+        })
+    ]
+});
 
 /**
  * @param driver phantomjs driver
@@ -88,6 +99,7 @@ function singleQuery(driverEntity, url, kw) {
                     }, 30000);
                 });
             }).catch(function (err) {
+                logger.log(err);
                 return {
                     error: 1,
                     message: err.name
