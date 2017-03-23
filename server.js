@@ -121,12 +121,12 @@ const seoHandler = (request, response) => {
         if (!optJson.error) {
             finalResponse = new RespEntity(correctCode, optJson).getEntityStr();
         } else {
-            if (optJson.error == 'TimeoutError') {
+            if (optJson.error == config.code_siteDown) {
                 finalResponse = new RespEntity(config.code_siteDown, msgContainer.TIMEOUT).getEntityStr();
             } else if (optJson.error == config.code_badResponse) {
                 finalResponse = new RespEntity(config.code_badResponse, optJson.message).getEntityStr();
             } else {
-                finalResponse = new RespEntity(config.code_unknown, msgContainer.UNKNOWN).getEntityStr();
+                finalResponse = new RespEntity(config.code_unknown, msgContainer.UNKNOWN + ' - ' + optJson.message).getEntityStr();
             }
         }
     }).then(() => {

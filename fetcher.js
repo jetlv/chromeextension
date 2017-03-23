@@ -84,11 +84,15 @@ function singleQuery(driverEntity, url, kw) {
     return checkResponseCode(url).then(function (statusCode) {
         if (statusCode >= 400) {
             if (statusCode == 999) {
-                statusCode = 'TimeoutError';
-            }
-            return {
-                error: config.code_badResponse,
-                message: statusCode
+                return {
+                    error: config.code_siteDown,
+                    message: statusCode
+                }
+            } else {
+                return {
+                    error: config.code_badResponse,
+                    message: statusCode
+                }
             }
         }
         else {
@@ -108,7 +112,8 @@ function singleQuery(driverEntity, url, kw) {
             }).catch(function (err) {
                 logger.error(err);
                 return {
-                    error: err.name
+                    error: config.code_unknown,
+                    message: err
                 }
             });
         }
