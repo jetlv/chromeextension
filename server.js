@@ -22,7 +22,7 @@ const port = 3000;
 /** 10000 as code wound be returned if request would not be completed successfully */
 const errorCode = config.code_system;
 /** 1 as code wound be returned if request completed well */
-const correctCode = 1;
+const correctCode = config.code_correct;
 /** driver store*/
 if (config.debug == 0) {
     console.log = function () {
@@ -44,6 +44,34 @@ process.on("SIGINT", function () {
 
 process.setMaxListeners(0); //Since we are going to set up many phantomjs drivers, so there are many listeners would be triggered, so cancel limit of listeners
 
+let msgContainer = {
+    EMPTY_LINK: 'Please provide target link',
+    WRONG_LINK: 'Wrong url ',
+    DRIVER_MAX: 'Max driver numbers reached',
+    TIMEOUT: 'Server was unable to response, seems the server was done',
+    UNKNOWN: 'unkown error, please contact author'
+}
+/**
+ * response entity -
+ */
+class RespEntity {
+    constructor(code, message) {
+        this.code = code;
+        this.message = message;
+    };
+
+    /**
+     * generate the response json string
+     */
+    getEntityStr() {
+        if (this.code == correctCode) {
+            return JSON.stringify({code: this.code, result: this.message})
+        } else {
+            return JSON.stringify({code: this.code, message: this.message})
+        }
+    }
+}
+
 /**
  * Handle seo information
  * @param request
@@ -51,125 +79,67 @@ process.setMaxListeners(0); //Since we are going to set up many phantomjs driver
  */
 const seoHandler = (request, response) => {
     console.log(global.runningDrivers + ' drivers are running');
-    /** replace circle*/
-    var reqUrl = request.url
+    let reqUrl = request.url
     /**  parse url */
-    var queryObject = url.parse(reqUrl, true).query;
-    var link = queryObject.link;
-    var kw = queryObject.keyword;
+    let queryObject = url.parse(reqUrl, true).query;
+    let link = queryObject.link;
+    let kw = queryObject.keyword;
     if (!link) {
-        response.end(JSON.stringify({
-            code: errorCode,
-            message: 'Please provide target link'
-        }));
+        response.end(new RespEntity(errorCode, msgContainer.EMPTY_LINK).getEntityStr());
         return;
     }
     /** Validate url */
-    var validatorOptions = {protocols: ['http', 'https']};
+    let validatorOptions = {protocols: ['http', 'https']};
     if (!validator.isURL(link, validatorOptions)) {
-        response.end(JSON.stringify({
-            code: errorCode,
-            message: 'Wrong url ' + link
-        }));
+        response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
         return;
     }
     let driverEntity = null;
-    // console.log(allDrivers);;
     allDrivers.forEach(function (entity, index, array) {
         if (entity.busy == 0) {
             driverEntity = entity;
         }
     });
+    let finalResponse = null;
     if (!driverEntity) {
         if (global.runningDrivers < config.maxDriverNumber) {
-            let newDriver = fetcher.newDriver(1);
-            // allDrivers.push(newDriver);
+            driverEntity = fetcher.newDriver(1);
             console.log('New driver created  - ' + global.runningDrivers + ' drivers here');
-            singleQuery(newDriver, link, kw).then(function (optJson) {
-                // let index = allDrivers.indexOf(newDriver);
-                // allDrivers.splice(index, 1);
-                //The only correct entry
-                newDriver.busy = 0;
-                global.runningDrivers--;
-                console.log('quit a driver, now ' + global.runningDrivers + ' drivers');
-                if (newDriver.tag == 1) {
-                    newDriver = null;
-                }
-                if (optJson.error) {
-                    if (optJson.message == 'TimeoutError') {
-                        response.end(JSON.stringify({
-                            code: config.code_siteDown,
-                            message: 'Server was unable to response for ' + config.pageLoadTimeout + ' ms, seems the server was done'
-                        }));
-                    } else if (optJson.error == config.code_badResponse) {
-                        response.end(JSON.stringify({
-                            code: config.code_badResponse,
-                            message: optJson.message
-                        }));
-                    } else {
-                        console.log(optJson.message);
-                        response.end(JSON.stringify({
-                            code: config.code_unknown,
-                            message: 'unknown error'
-                        }));
-                    }
-                } else {
-                    response.end(JSON.stringify({
-                        code: correctCode,
-                        result: optJson
-                    }));
-                }
-            });
         } else {
-            response.end(JSON.stringify({
-                code: errorCode,
-                message: "too many requests, please retry later"
-            }));
+            finalResponse = new RespEntity(errorCode, msgContainer.DRIVER_MAX).getEntityStr();
+            response.end(finalResponse);
+            return;
         }
-    } else {
-        singleQuery(driverEntity, link, kw).then(function (optJson) {
-                driverEntity.busy = 0;
-                global.runningDrivers--;
-                console.log('quit a driver, now ' + global.runningDrivers + ' drivers');
-                if (driverEntity.tag == 1) {
-                    driverEntity = null;
-                }
-                if (optJson.error) {
-                    if (optJson.message == 'TimeoutError') {
-                        response.end(JSON.stringify({
-                            code: config.code_siteDown,
-                            message: 'Server was unable to response, seems the server was done'
-                        }));
-                    } else if (optJson.error == config.code_badResponse) {
-                        response.end(JSON.stringify({
-                            code: config.code_badResponse,
-                            message: optJson.message
-                        }));
-                    } else {
-                        console.log(optJson.message);
-                        response.end(JSON.stringify({
-                            code: config.code_unknown,
-                            message: 'unknown error'
-                        }));
-                    }
-                } else {
-                    response.end(JSON.stringify({
-                        code: correctCode,
-                        result: optJson
-                    }));
-                }
-            }
-        );
     }
-
+    singleQuery(driverEntity, link, kw).then(optJson => {
+        driverEntity.busy = 0;
+        global.runningDrivers--;
+        console.log('Now ' + global.runningDrivers + ' drivers');
+        if (driverEntity.tag == 1) {
+            driverEntity = null;
+        }
+        if (!optJson.error) {
+            finalResponse = new RespEntity(correctCode, optJson).getEntityStr();
+        } else {
+            if (optJson.error == 'TimeoutError') {
+                finalResponse = new RespEntity(config.code_siteDown, msgContainer.TIMEOUT).getEntityStr();
+            } else if (optJson.error == config.code_badResponse) {
+                finalResponse = new RespEntity(config.code_badResponse, optJson.message).getEntityStr();
+            } else {
+                finalResponse = new RespEntity(config.code_unknown, msgContainer.UNKNOWN).getEntityStr();
+            }
+        }
+    }).then(() => {
+        response.end(finalResponse);
+    });
 }
 
 const brokenHandler = (request, response) => {
     /** replace circle*/
-    var reqUrl = request.url
+    let reqUrl = request.url
     /**  parse url */
-    var queryObject = url.parse(reqUrl, true).query;
-    var link = queryObject.link;
+    let queryObject = url.parse(reqUrl, true).query;
+    let link = queryObject.link;
     if (!link) {
         response.end(JSON.stringify({
             code: errorCode,
@@ -178,7 +148,7 @@ const brokenHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    var validatorOptions = {protocols: ['http', 'https']};
+    let validatorOptions = {protocols: ['http', 'https']};
     if (!validator.isURL(link, validatorOptions)) {
         response.end(JSON.stringify({
             code: errorCode,
@@ -201,7 +171,6 @@ const requestHandler = (request, response) => {
     }
 }
 
-
 const server = http.createServer(requestHandler).withShutdown();
 
 server.listen(port, (err) => {
@@ -216,7 +185,9 @@ server.listen(port, (err) => {
     }
     console.log(`scraper server is listening on ${port}`)
     console.log(allDrivers.length + ' instances are running');
-})
+});
+
+
 let reqTimeout = config.reqTimeout;
 if (!reqTimeout) {
     reqTimeout = 60000; //Default value is 60000
@@ -225,6 +196,10 @@ server.timeout = reqTimeout;
 
 server.on('connection', (socket) => {
     socket.on('error', (error) => {
-        logger.log(error);
+        logger.error(error);
     });
+});
+
+server.on('err', (error) => {
+    logger.error(error);
 });
