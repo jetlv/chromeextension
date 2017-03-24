@@ -104,6 +104,7 @@ const seoHandler = (request, response) => {
     if (!driverEntity) {
         if (global.runningDrivers < config.maxDriverNumber) {
             driverEntity = fetcher.newDriver(1);
+            global.runningDrivers++;
             console.log('New driver created  - ' + global.runningDrivers + ' drivers here');
         } else {
             finalResponse = new RespEntity(errorCode, msgContainer.DRIVER_MAX).getEntityStr();
@@ -113,7 +114,6 @@ const seoHandler = (request, response) => {
     }
     singleQuery(driverEntity, link, kw).then(optJson => {
         driverEntity.busy = 0;
-        global.runningDrivers--;
         console.log('Now ' + global.runningDrivers + ' drivers');
         if (driverEntity.tag == 1) {
             driverEntity = null;
