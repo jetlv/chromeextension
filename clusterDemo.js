@@ -19,7 +19,7 @@ if (cluster.isMaster) {
     var num = 0;
     http.createServer(function (req, res) {
         num++;
-        console.log('worker'+cluster.worker.id+":"+num);
-        res.end('worker'+cluster.worker.id+',PID:'+process.pid);
+        console.log('worker' + cluster.worker.id + ":" + num);
+        res.end('worker' + cluster.worker.id + ',PID:' + process.pid);
     }).listen(3000);
 }

@@ -3,7 +3,7 @@
  */
 module.exports = {
     //***********************seo information collector configuration******************
-    defaultDriverNumber: 5, //Default launched phantomjs browser
+    defaultDriverNumber: 20, //Default launched phantomjs browser
     maxDriverNumber: 200, //Limit number of phantomjs browser
     pageLoadTimeout: 30000,//msec that wait for a page loading
     //**********************Sep line - following are broken-link-chekcer configuration*************************

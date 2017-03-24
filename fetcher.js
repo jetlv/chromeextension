@@ -80,7 +80,6 @@ let parseHtml = (source, url, kw, $) => {
  */
 function singleQuery(driverEntity, url, kw) {
     driverEntity.busy = 1;
-    global.runningDrivers++;
     return checkResponseCode(url).then(function (statusCode) {
         if (statusCode >= 400) {
             if (statusCode == 999) {
@@ -105,6 +104,7 @@ function singleQuery(driverEntity, url, kw) {
                         var $ = cheerio.load(source);
                         if (driverEntity.tag == 1) {
                             driver.quit();
+                            global.runningDrivers--;
                         }
                         return parseHtml(source, url, kw, $);
                     });
