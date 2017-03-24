@@ -5,5 +5,7 @@
 let http = require('http');
 
 http.createServer(function (req, res) {
-    res.end("this is my server")
+    setTimeout(() => {
+        res.end("this is my server")
+    }, 2000);
 }).listen(5000);

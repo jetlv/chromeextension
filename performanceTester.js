@@ -5,10 +5,10 @@
 let rp = require('request-promise');
 let Promise = require('bluebird');
 
-let ar = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+let con = 30;
 let i = 0;
-ar = [];
-while(i < 20) {
+let ar = [];
+while(i < con) {
     i++;
     ar.push(i);
 }
@@ -19,7 +19,7 @@ Promise.map(ar, function (id) {
         console.log(id + ' was done with code ' + body.code);
         return id;
     });
-}, {concurrency: 10}).then(function() {
+}, {concurrency: con}).then(function() {
     console.log(Date.now() - start);
 });
 //
