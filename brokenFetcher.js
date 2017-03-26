@@ -9,13 +9,17 @@ let config = require('./configuration.js');
 let options = {
     honorRobotExclusions: false,
     maxSocketsPerHost: config.maxSocketsPerHost,
-    maxSockets : config.maxSockets,
+    maxSockets: config.maxSockets,
     filterLevel: config.filterLevel,
-    cacheResponses: true
+    cacheResponses: config.cacheResponses,
+    excludedKeywords: config.excludedKeywords,
+    userAgent: config.userAgent
 }
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     html: function (tree, robots, response, pageUrl, customData) {
+        // let html = require('parse5').serialize(tree);
+        // require('fs').writeFileSync('parsed.html', html);
     },
     junk: function (result, customData) {
     },
