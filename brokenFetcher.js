@@ -13,7 +13,8 @@ let options = {
     filterLevel: config.filterLevel,
     cacheResponses: config.cacheResponses,
     excludedKeywords: config.excludedKeywords,
-    userAgent: config.userAgent
+    userAgent: config.userAgent,
+    requestMethod: config.requestMethod
 }
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
