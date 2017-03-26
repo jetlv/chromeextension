@@ -166,6 +166,9 @@ function checkResponseCode(url) {
     let options = {
         method: 'GET',
         uri: url,
+        headers: {
+            'User-Agent': 'http://www.allnew.com.au/'
+        },
         simple: false,
         resolveWithFullResponse: true,
         timeout: config.pageLoadTimeout
