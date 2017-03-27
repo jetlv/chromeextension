@@ -19,14 +19,18 @@ let options = {
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     html: function (tree, robots, response, pageUrl, customData) {
-        // let html = require('parse5').serialize(tree);
-        // require('fs').writeFileSync('parsed.html', html);
+        let html = require('parse5').serialize(tree);
+        require('fs').writeFileSync('parsed.html', html);
     },
     junk: function (result, customData) {
     },
     link: function (result, customData) {
+        console.log(result);
         if (result.broken && (result.brokenReason == 'HTTP_404')) {
             let originalUrl = result.url.original;
+            // if(originalUrl.startsWith("//")) {
+            //     return;
+            // }
             let resolvedUrl = result.url.resolved;
             let brokenReason = result.brokenReason;
             let opt = {
@@ -42,6 +46,9 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
         }
     },
     page: function (error, pageUrl, customData) {
+        if(error) {
+            console.log(error);
+        }
         let response = customData.response;
         let internalLinks = customData.internalBrokenUrls.list;
         let externalLinks = customData.externalBrokenUrls.list;
@@ -74,6 +81,4 @@ let brokenFetcher = (link, response) => {
     htmlUrlChecker.enqueue(link, customEntity);
 }
 
-module.exports = brokenFetcher
-
-;
+module.exports = brokenFetcher;

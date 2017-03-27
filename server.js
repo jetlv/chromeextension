@@ -89,7 +89,7 @@ const seoHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https']};
+    let validatorOptions = {protocols: ['http', 'https'], require_protocol : true};
     if (!validator.isURL(link, validatorOptions)) {
         response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
         return;
@@ -148,7 +148,7 @@ const brokenHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https']};
+    let validatorOptions = {protocols: ['http', 'https'], require_protocol : true};
     if (!validator.isURL(link, validatorOptions)) {
         response.end(JSON.stringify({
             code: errorCode,
