@@ -1,6 +1,11 @@
 let blc = require('./m_broken_link_checker/index.js');
 let config = require('./configuration.js');
-
+/**
+ * For links counter
+ */
+let scrapeHtml = require("./m_broken_link_checker/internal/scrapeHtml");
+let parseOptions = require('./m_broken_link_checker/internal/parseOptions');
+let linkObj = require('./m_broken_link_checker/internal/linkObj');
 /**
  *
  * @type {{honorRobotExclusions: boolean, maxSocketsPerHost: number, filterLevel: number, cacheResponses: boolean}}
@@ -19,8 +24,21 @@ let options = {
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     html: function (tree, robots, response, pageUrl, customData) {
-        // let html = require('parse5').serialize(tree);
-        // require('fs').writeFileSync('parsed.html', html);
+        /**
+         * Count outbounds links
+         */
+        let links = scrapeHtml(tree);
+        let baseUrl = response.url;
+        let outbounds = [];
+        links.forEach(function (link, index, element) {
+            linkObj.resolve(link, baseUrl, parseOptions(options));
+            // console.log(link);
+            if (!link.internal) {
+                outbounds.push(link.url.resolved);
+            }
+        });
+        console.log(outbounds);
+        customData.externalLinksCount = outbounds.length;
     },
     junk: function (result, customData) {
     },
@@ -46,16 +64,20 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
         }
     },
     page: function (error, pageUrl, customData) {
-        if (error) {
-            console.log(error);
-        }
         let response = customData.response;
+        if (error) {
+            response.end(JSON.stringify({
+                code: 10000,
+                message: error.message
+            }));
+        }
         let internalLinks = customData.internalBrokenUrls.list;
         let externalLinks = customData.externalBrokenUrls.list;
         let internalCount = internalLinks.length;
         let externalCount = externalLinks.length;
         response.end(JSON.stringify({
             code: 1,
+            externalLinksCount: customData.externalLinksCount,
             brokenInternalLink: {
                 count: internalCount,
                 list: internalLinks
@@ -65,7 +87,8 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
                 list: externalLinks
             }
         }));
-    },
+    }
+    ,
     end: function (customData) {
     }
 });
