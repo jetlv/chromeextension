@@ -1,4 +1,4 @@
-let blc = require('broken-link-checker');
+let blc = require('./m_broken_link_checker/index.js');
 let config = require('./configuration.js');
 
 /**
@@ -25,10 +25,10 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     junk: function (result, customData) {
     },
     link: function (result, customData) {
-        console.log(result);
-        if (result.broken && (result.brokenReason == 'HTTP_404')) {
+        // console.log(result);
+        if (result.broken && ( result.brokenReason == 'HTTP_404')) {
             let originalUrl = result.url.original;
-            if(originalUrl.startsWith("//")) {
+            if (originalUrl.startsWith("//")) {
                 return;
             }
             let resolvedUrl = result.url.resolved;
@@ -46,7 +46,7 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
         }
     },
     page: function (error, pageUrl, customData) {
-        if(error) {
+        if (error) {
             console.log(error);
         }
         let response = customData.response;
