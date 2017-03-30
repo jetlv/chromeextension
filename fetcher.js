@@ -126,13 +126,15 @@ function singleQuery(driverEntity, url, kw) {
  * @returns {{busy: number, driver: !webdriver.WebDriver}}
  * Create a new phantomjs driver
  */
+// let co = require('co');
 function createNewDriver(tag) {
-    var driver = new webdriver.Builder().forBrowser('phantomjs').build();
+    let driver = new webdriver.Builder().forBrowser('phantomjs').build();
     return {
         busy: 0,
         driver: driver,
         tag: tag
-    }
+    };
+
 }
 
 /**

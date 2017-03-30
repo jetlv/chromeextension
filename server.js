@@ -89,7 +89,7 @@ const seoHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https'], require_protocol : true};
+    let validatorOptions = {protocols: ['http', 'https'], require_protocol: true};
     if (!validator.isURL(link, validatorOptions)) {
         response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
         return;
@@ -113,11 +113,6 @@ const seoHandler = (request, response) => {
         }
     }
     singleQuery(driverEntity, link, kw).then(optJson => {
-        driverEntity.busy = 0;
-        console.log('Now ' + global.runningDrivers + ' drivers');
-        if (driverEntity.tag == 1) {
-            driverEntity = null;
-        }
         if (!optJson.error) {
             finalResponse = new RespEntity(correctCode, optJson).getEntityStr();
         } else {
@@ -129,8 +124,17 @@ const seoHandler = (request, response) => {
                 finalResponse = new RespEntity(config.code_unknown, msgContainer.UNKNOWN + ' - ' + optJson.message).getEntityStr();
             }
         }
-    }).then(() => {
+        return driverEntity;
+    }).then((driverEntity) => {
         response.end(finalResponse);
+        driverEntity.driver.quit();
+        driverEntity.driver = fetcher.newDriver(0);
+        driverEntity.busy = 0;
+        console.log('Now ' + global.runningDrivers + ' drivers');
+        if (driverEntity.tag == 1) {
+            driverEntity = null;
+        }
+        return 0;
     });
 }
 
@@ -148,7 +152,7 @@ const brokenHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https'], require_protocol : true};
+    let validatorOptions = {protocols: ['http', 'https'], require_protocol: true};
     if (!validator.isURL(link, validatorOptions)) {
         response.end(JSON.stringify({
             code: errorCode,
