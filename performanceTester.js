@@ -5,21 +5,21 @@
 let rp = require('request-promise');
 let Promise = require('bluebird');
 
-let con = 10;
+let con = 1;
 let i = 0;
 let ar = [];
-while(i < con) {
+while(i < 200) {
     i++;
     ar.push(i);
 }
 let start = Date.now();
 Promise.map(ar, function (id) {
-    return rp({uri: 'http://localhost:3000/seo?link=http://127.0.0.1:5000/', method: 'GET', json : true}).then(function (body) {
+    return rp({uri: 'http://localhost:3000/seo?link=http://www.baidu.com', method: 'GET', json : true}).then(function (body) {
         // console.log(body);
         console.log(id + ' was done with code ' + body.code);
         return id;
     });
-}, {concurrency: con}).then(function() {
+}, {concurrency: 10}).then(function() {
     console.log(Date.now() - start);
 });
 //

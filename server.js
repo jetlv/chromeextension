@@ -94,25 +94,8 @@ const seoHandler = (request, response) => {
         response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
         return;
     }
-    let driverEntity = null;
-    allDrivers.forEach(function (entity, index, array) {
-        if (entity.busy == 0) {
-            driverEntity = entity;
-        }
-    });
     let finalResponse = null;
-    if (!driverEntity) {
-        if (global.runningDrivers < config.maxDriverNumber) {
-            driverEntity = fetcher.newDriver(1);
-            global.runningDrivers++;
-            console.log('New driver created  - ' + global.runningDrivers + ' drivers here');
-        } else {
-            finalResponse = new RespEntity(errorCode, msgContainer.DRIVER_MAX).getEntityStr();
-            response.end(finalResponse);
-            return;
-        }
-    }
-    singleQuery(driverEntity, link, kw).then(optJson => {
+    singleQuery(link, kw).then(optJson => {
         if (!optJson.error) {
             finalResponse = new RespEntity(correctCode, optJson).getEntityStr();
         } else {
@@ -124,17 +107,8 @@ const seoHandler = (request, response) => {
                 finalResponse = new RespEntity(config.code_unknown, msgContainer.UNKNOWN + ' - ' + optJson.message).getEntityStr();
             }
         }
-        return driverEntity;
     }).then((driverEntity) => {
         response.end(finalResponse);
-        driverEntity.driver.quit();
-        driverEntity.driver = fetcher.newDriver(0);
-        driverEntity.busy = 0;
-        console.log('Now ' + global.runningDrivers + ' drivers');
-        if (driverEntity.tag == 1) {
-            driverEntity = null;
-        }
-        return 0;
     });
 }
 

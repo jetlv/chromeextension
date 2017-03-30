@@ -19,7 +19,7 @@ module.exports = {
      lets the maximum 60 * 60 = 3600 M
      */
     //***********************seo information collector configuration******************
-    defaultDriverNumber: 30, //Default launched phantomjs browser
+    defaultDriverNumber: 0, //Default launched phantomjs browser
     maxDriverNumber: 60, //Limit number of phantomjs browser
     pageLoadTimeout: 60000,//msec that wait for a page loading
     //**********************Sep line - following are broken-link-chekcer configuration*************************
@@ -33,7 +33,7 @@ module.exports = {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
     //**********************Sep line - following are server&node.js configuration*************************
     reqTimeout : 120000, //msec, sockets will be killed after hanging ${reqTimeout} milliseconds
-    debug: 0, //1 means debug mode, 0 means product mode
+    debug: 1, //1 means debug mode, 0 means product mode
     //**********************Sep line - error code def*********************************************
     code_siteDown: 5, //Code which represents the target website was done.
     code_badResponse: 6, // 404, 503 etc.

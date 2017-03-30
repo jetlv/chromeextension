@@ -10,6 +10,7 @@ var density = require('./density.js');
 const config = require('./configuration.js');
 const rp = require('request-promise');
 const winston = require('winston');
+const Browser = require('zombie');
 
 let logger = new (winston.Logger)({
     transports: [
@@ -26,7 +27,7 @@ let logger = new (winston.Logger)({
  * @param source
  * @returns {{url, title: *, metaContent: null, canonical: *, noindex: string, wordCount}}
  */
-let parseHtml = (source, url, kw, $) => {
+let parseHtml = (url, kw, $) => {
     var title = $('title').text();
     var bodyHtml = $('body').html();
     var bodyText = $('body').text();
@@ -78,8 +79,7 @@ let parseHtml = (source, url, kw, $) => {
  * @param kw  keyword for density calculation
  * @returns {!ManagedPromise.<R>|*|Promise.<TResult>}
  */
-function singleQuery(driverEntity, url, kw) {
-    driverEntity.busy = 1;
+function singleQuery(url, kw) {
     return checkResponseCode(url).then(function (statusCode) {
         if (statusCode >= 400) {
             if (statusCode == 999) {
@@ -95,20 +95,15 @@ function singleQuery(driverEntity, url, kw) {
             }
         }
         else {
-            let driver = driverEntity.driver;
-            return driver.manage().timeouts().pageLoadTimeout(config.pageLoadTimeout).then(function () {
-                return driver.get(url);
-            }).then(function () {
-                return driver.wait(function () {
-                    return driver.getPageSource().then(function (source) {
-                        var $ = cheerio.load(source);
-                        if (driverEntity.tag == 1) {
-                            driver.quit();
-                            global.runningDrivers--;
-                        }
-                        return parseHtml(source, url, kw, $);
-                    });
-                }, 30000);
+            let browser = new Browser();
+            return browser.fetch(url)
+                .then(function (response) {
+                    return response.text();
+                }).then(source => {
+                let opt = parseHtml(url, kw, cheerio.load(source));
+                console.log(opt);
+                browser.tabs.closeAll();
+                return opt;
             }).catch(function (err) {
                 logger.error(err);
                 return {
