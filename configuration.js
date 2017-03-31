@@ -28,7 +28,7 @@ module.exports = {
     filterLevel : 1,//0: clickable links 1: clickable links, media, iframes, meta refreshes 2: clickable links, media, iframes, meta refreshes, stylesheets, scripts, forms3: clickable links, media, iframes, meta refreshes, stylesheets, scripts, forms, metadata
     cacheResponses: false,
     cacheExpiryTime: 3600000,
-    requestMethod: 'HEAD',
+    requestMethod: 'head',
     retry405Head : true,
     excludedKeywords: ["captcha"],
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',

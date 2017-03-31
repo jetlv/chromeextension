@@ -60,9 +60,16 @@ function checkUrl(link, baseUrl, cache, options, retry) {
             // }
             response = simpleResponse(response);
             //also retry 404
-            if (((response.statusCode === 405) || (response.statusCode === 404)) && options.requestMethod === "head" && options.retry405Head === true && retry !== 405) {
+            if (((response.statusCode === 405) || (response.statusCode === 404)) && options.requestMethod === "head" && options.retry405Head === true && retry !== 405 && retry !== 'protocol') {
                 // Retry possibly broken server with "get"
                 return checkUrl(link, baseUrl, cache, options, 405);
+            }
+
+            if(retry === 405) {
+                //After second checking
+                if ((response.statusCode === 404)) {
+                    return checkUrl(link, baseUrl, cache, options, 'protocol');
+                }
             }
 
             // TODO :: store ALL redirected urls in cache
@@ -73,7 +80,6 @@ function checkUrl(link, baseUrl, cache, options, retry) {
             return response;
         })
         .catch(function (error) {
-            console.log(error);
             // The error will be stored as a response
             return error;
         });
