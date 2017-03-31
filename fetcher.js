@@ -169,7 +169,7 @@ function checkResponseCode(url) {
         method: 'GET',
         uri: url,
         headers: {
-            'User-Agent': 'http://www.allnew.com.au/'
+            'User-Agent': config.userAgent
         },
         simple: false,
         resolveWithFullResponse: true,
