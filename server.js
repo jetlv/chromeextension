@@ -89,10 +89,23 @@ const seoHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https'], require_protocol: true};
-    if (!validator.isURL(link, validatorOptions)) {
-        response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
-        return;
+    let validatorOptions = {
+        protocols: ['http', 'https'],
+        require_protocol: true,
+        allow_underscores: true,
+        allow_trailing_dot: true
+    };
+    if (link.indexOf('#') !== -1) {
+        let mainPart = link.split('#')[0];
+        if (!validator.isURL(mainPart, validatorOptions)) {
+            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+            return;
+        }
+    } else {
+        if (!validator.isURL(link, validatorOptions)) {
+            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+            return;
+        }
     }
     let driverEntity = null;
     allDrivers.forEach(function (entity, index, array) {
@@ -152,13 +165,23 @@ const brokenHandler = (request, response) => {
         return;
     }
     /** Validate url */
-    let validatorOptions = {protocols: ['http', 'https'], require_protocol: true};
-    if (!validator.isURL(link, validatorOptions)) {
-        response.end(JSON.stringify({
-            code: errorCode,
-            message: 'Wrong url ' + link
-        }));
-        return;
+    let validatorOptions = {
+        protocols: ['http', 'https'],
+        require_protocol: true,
+        allow_underscores: true,
+        allow_trailing_dot: true
+    };
+    if (link.indexOf('#') !== -1) {
+        let mainPart = link.split('#')[0];
+        if (!validator.isURL(mainPart, validatorOptions)) {
+            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+            return;
+        }
+    } else {
+        if (!validator.isURL(link, validatorOptions)) {
+            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+            return;
+        }
     }
     brokenFetcher(link, response);
 }

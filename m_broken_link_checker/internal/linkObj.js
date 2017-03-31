@@ -99,9 +99,7 @@ linkObj.relation = function (link, url_parsed) {
         if (relation == -1) {
             if ((url_parsed.protocol == "http:") || (url_parsed.protocol == "https:")) {
                 url_parsed.protocol = link.base.parsed.protocol;
-                console.log(url_parsed.protocol);
                 relation = urlobj.relation(url_parsed, link.base.parsed);
-                console.log(relation);
             }
         }
 

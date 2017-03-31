@@ -21,7 +21,7 @@ function HtmlUrlChecker(options, handlers)
 	
 	this.htmlUrlQueue = new RequestQueue(
 	{
-		maxSockets: 1,
+		maxSockets: 50,
 		rateLimit: this.options.rateLimit
 	},
 	{

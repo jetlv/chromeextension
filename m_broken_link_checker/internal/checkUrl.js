@@ -51,6 +51,7 @@ function checkUrl(link, baseUrl, cache, options, retry) {
         {
             discardResponse: true,
             headers: {"user-agent": options.userAgent},
+            responseTimeout: 10000,
             method: retry !== 405 ? options.requestMethod : "get"
         })
         .then(function (response) {
@@ -58,11 +59,25 @@ function checkUrl(link, baseUrl, cache, options, retry) {
             // 	console.log('debug');
             // }
             response = simpleResponse(response);
-
-            if (response.statusCode === 405 && options.requestMethod === "head" && options.retry405Head === true && retry !== 405) {
+            //also retry 404
+            if (((response.statusCode === 405) || (response.statusCode === 404)) && options.requestMethod === "head" && options.retry405Head === true && retry !== 405 && retry !== 'protocol') {
                 // Retry possibly broken server with "get"
                 return checkUrl(link, baseUrl, cache, options, 405);
             }
+
+            // if (retry === 405) {
+            //     //After second checking
+            //     if ((response.statusCode === 404)) {
+            //         if (link.url.resolved.startsWith('https')) {
+            //             link.url.resolved = link.url.resolved.replace('https', 'http');
+            //             return checkUrl(link, baseUrl, cache, options, 'protocol');
+            //         } else {
+            //             link.url.resolved = link.url.resolved.replace('http', 'https');
+            //             return checkUrl(link, baseUrl, cache, options, 'protocol');
+            //         }
+            //
+            //     }
+            // }
 
             // TODO :: store ALL redirected urls in cache
             if (options.cacheResponses === true && response.url !== link.url.resolved) {

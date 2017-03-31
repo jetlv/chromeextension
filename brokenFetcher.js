@@ -27,18 +27,18 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
         /**
          * Count outbounds links
          */
-        let links = scrapeHtml(tree);
-        let baseUrl = response.url;
-        let outbounds = [];
-        links.forEach(function (link, index, element) {
-            linkObj.resolve(link, baseUrl, parseOptions(options));
-            // console.log(link);
-            if (!link.internal) {
-                outbounds.push(link.url.resolved);
-            }
-        });
-        console.log(outbounds);
-        customData.externalLinksCount = outbounds.length;
+        // let links = scrapeHtml(tree);
+        // let baseUrl = response.url;
+        // let outbounds = [];
+        // links.forEach(function (link, index, element) {
+        //     linkObj.resolve(link, baseUrl, parseOptions(options));
+        //     // console.log(link);
+        //     if (!link.internal) {
+        //         outbounds.push(link.url.resolved);
+        //     }
+        // });
+        // console.log(outbounds);
+        // customData.externalLinksCount = outbounds.length;
     },
     junk: function (result, customData) {
     },
@@ -77,7 +77,7 @@ var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
         let externalCount = externalLinks.length;
         response.end(JSON.stringify({
             code: 1,
-            externalLinksCount: customData.externalLinksCount,
+            // externalLinksCount: customData.externalLinksCount,
             brokenInternalLink: {
                 count: internalCount,
                 list: internalLinks
