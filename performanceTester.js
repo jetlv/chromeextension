@@ -8,7 +8,7 @@ let Promise = require('bluebird');
 let con = 1;
 let i = 0;
 let ar = [];
-while(i < 200) {
+while(i < 1000) {
     i++;
     ar.push(i);
 }

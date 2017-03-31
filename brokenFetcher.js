@@ -19,7 +19,8 @@ let options = {
     cacheResponses: config.cacheResponses,
     excludedKeywords: config.excludedKeywords,
     userAgent: config.userAgent,
-    requestMethod: config.requestMethod
+    requestMethod: config.requestMethod,
+    retry405Head: true
 }
 
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {

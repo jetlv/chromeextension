@@ -51,7 +51,7 @@ function checkUrl(link, baseUrl, cache, options, retry) {
         {
             discardResponse: true,
             headers: {"user-agent": options.userAgent},
-            responseTimeout : 10000,
+            responseTimeout: 20000,
             method: retry !== 405 ? options.requestMethod : "get"
         })
         .then(function (response) {
@@ -59,8 +59,8 @@ function checkUrl(link, baseUrl, cache, options, retry) {
             // 	console.log('debug');
             // }
             response = simpleResponse(response);
-
-            if (response.statusCode === 405 && options.requestMethod === "head" && options.retry405Head === true && retry !== 405) {
+            //also retry 404
+            if (((response.statusCode === 405) || (response.statusCode === 404)) && options.requestMethod === "head" && options.retry405Head === true && retry !== 405) {
                 // Retry possibly broken server with "get"
                 return checkUrl(link, baseUrl, cache, options, 405);
             }
