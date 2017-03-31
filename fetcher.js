@@ -97,20 +97,22 @@ function singleQuery(url, kw) {
         else {
             if (url.match(/google.com/) || config.usePhantom) {
                 console.log('Phantomjs used');
-                let driver = createNewDriver(1).driver;
-                return driver.get(url).then(()=> {
-                    return driver.getPageSource();
-                }).then(source => {
-                    driver.quit();
-                    let opt = parseHtml(url, kw, cheerio.load(source));
-                    return opt;
-                }).catch(function (err) {
-                    logger.error(err);
-                    return {
-                        error: config.code_unknown,
-                        message: err
-                    }
-                });
+                // let driver = createNewDriver(1).driver;
+                return new webdriver.Builder().forBrowser('phantomjs').build().then(driver => {
+                    driver.get(url).then(()=> {
+                        return driver.getPageSource();
+                    }).then(source => {
+                        driver.quit();
+                        let opt = parseHtml(url, kw, cheerio.load(source));
+                        return opt;
+                    }).catch(function (err) {
+                        logger.error(err);
+                        return {
+                            error: config.code_unknown,
+                            message: err
+                        }
+                    });
+                })
             } else {
                 console.log('Zombie used');
                 let browser = new Browser();
@@ -180,6 +182,7 @@ function httpChecker(url, statusCode) {
  */
 function checkResponseCode(url) {
     let options = {
+        proxy : 'http://127.0.0.1:1081',
         method: 'GET',
         uri: url,
         headers: {
