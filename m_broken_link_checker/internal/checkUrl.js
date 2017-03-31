@@ -51,7 +51,7 @@ function checkUrl(link, baseUrl, cache, options, retry) {
         {
             discardResponse: true,
             headers: {"user-agent": options.userAgent},
-            responseTimeout: 20000,
+            responseTimeout: 10000,
             method: retry !== 405 ? options.requestMethod : "get"
         })
         .then(function (response) {

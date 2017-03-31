@@ -95,22 +95,41 @@ function singleQuery(url, kw) {
             }
         }
         else {
-            let browser = new Browser();
-            return browser.fetch(url)
-                .then(function (response) {
-                    return response.text();
+            if (url.match(/google.com/) || config.usePhantom) {
+                console.log('Phantomjs used');
+                let driver = createNewDriver(1).driver;
+                return driver.get(url).then(()=> {
+                    return driver.getPageSource();
                 }).then(source => {
-                let opt = parseHtml(url, kw, cheerio.load(source));
-                console.log(opt);
-                browser.tabs.closeAll();
-                return opt;
-            }).catch(function (err) {
-                logger.error(err);
-                return {
-                    error: config.code_unknown,
-                    message: err
-                }
-            });
+                    driver.quit();
+                    let opt = parseHtml(url, kw, cheerio.load(source));
+                    return opt;
+                }).catch(function (err) {
+                    logger.error(err);
+                    return {
+                        error: config.code_unknown,
+                        message: err
+                    }
+                });
+            } else {
+                console.log('Zombie used');
+                let browser = new Browser();
+                return browser.fetch(url)
+                    .then(function (response) {
+                        return response.text();
+                    }).then(source => {
+                            let opt = parseHtml(url, kw, cheerio.load(source));
+                            browser.tabs.closeAll();
+                            return opt;
+                        }
+                    ).catch(function (err) {
+                        logger.error(err);
+                        return {
+                            error: config.code_unknown,
+                            message: err
+                        }
+                    });
+            }
         }
     })
 }

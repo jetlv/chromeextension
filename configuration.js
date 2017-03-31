@@ -22,6 +22,7 @@ module.exports = {
     defaultDriverNumber: 0, //Default launched phantomjs browser
     maxDriverNumber: 60, //Limit number of phantomjs browser
     pageLoadTimeout: 60000,//msec that wait for a page loading
+    usePhantom : false,
     //**********************Sep line - following are broken-link-chekcer configuration*************************
     maxSocketsPerHost: 50, //The maximum number of links per host/port to check at any given time. This avoids overloading a single target host with too many concurrent requests. This will not limit concurrent requests to other hosts.
     maxSockets : 50, //The maximum number of links to check at any given time.
