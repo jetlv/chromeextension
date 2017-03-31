@@ -65,12 +65,19 @@ function checkUrl(link, baseUrl, cache, options, retry) {
                 return checkUrl(link, baseUrl, cache, options, 405);
             }
 
-            if(retry === 405) {
-                //After second checking
-                if ((response.statusCode === 404)) {
-                    return checkUrl(link, baseUrl, cache, options, 'protocol');
-                }
-            }
+            // if (retry === 405) {
+            //     //After second checking
+            //     if ((response.statusCode === 404)) {
+            //         if (link.url.resolved.startsWith('https')) {
+            //             link.url.resolved = link.url.resolved.replace('https', 'http');
+            //             return checkUrl(link, baseUrl, cache, options, 'protocol');
+            //         } else {
+            //             link.url.resolved = link.url.resolved.replace('http', 'https');
+            //             return checkUrl(link, baseUrl, cache, options, 'protocol');
+            //         }
+            //
+            //     }
+            // }
 
             // TODO :: store ALL redirected urls in cache
             if (options.cacheResponses === true && response.url !== link.url.resolved) {
