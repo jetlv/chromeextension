@@ -51,6 +51,7 @@ function checkUrl(link, baseUrl, cache, options, retry) {
         {
             discardResponse: true,
             headers: {"user-agent": options.userAgent},
+            responseTimeout : 10000,
             method: retry !== 405 ? options.requestMethod : "get"
         })
         .then(function (response) {
@@ -72,6 +73,7 @@ function checkUrl(link, baseUrl, cache, options, retry) {
             return response;
         })
         .catch(function (error) {
+            console.log(error);
             // The error will be stored as a response
             return error;
         });
