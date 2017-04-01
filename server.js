@@ -5,7 +5,7 @@ const winston = require('winston');
 const fetcher = require('./fetcher.js');
 const validator = require('validator');
 const config = require('./configuration.js');
-const brokenFetcher = require('./brokenFetcher.js');
+const brokenFetcher = fetcher.brokenFetcher;
 
 let logger = new (winston.Logger)({
     transports: [
@@ -64,11 +64,76 @@ class RespEntity {
      * generate the response json string
      */
     getEntityStr() {
+        if (!this.code) {
+            return JSON.stringify({result: this.message})
+        }
         if (this.code == correctCode) {
             return JSON.stringify({code: this.code, result: this.message})
         } else {
             return JSON.stringify({code: this.code, message: this.message})
         }
+    }
+}
+
+
+/**
+ * To validate url
+ * @param url
+ */
+let urlValidator = link => {
+    /** Validate url */
+    let validatorOptions = {
+        protocols: ['http', 'https'],
+        require_protocol: true,
+        allow_underscores: true,
+        allow_trailing_dot: true
+    };
+    if (link.indexOf('#') !== -1) {
+        let mainPart = link.split('#')[0];
+        if (!validator.isURL(mainPart, validatorOptions)) {
+            return false;
+        }
+        return true;
+    } else {
+        if (!validator.isURL(link, validatorOptions)) {
+            return false;
+        }
+        return true;
+    }
+}
+
+/**
+ * take a free driver
+ */
+let grabDriver = () => {
+    let found = false;
+    let foundDriver = null;
+    while (!found) {
+        let random = Math.floor(Math.random() * allDrivers.length);
+        let driverEntity = allDrivers[random];
+        if (driverEntity.busy == 0) {
+            found = true;
+            foundDriver = driverEntity;
+        }
+    }
+    if (!found) {
+        return foundDriver;
+    } else {
+        return fetcher.newDriver(1);
+    }
+}
+
+/**
+ * reinit a driver after running
+ * @param driverEntity
+ */
+let cleanUp = driverEntity => {
+    driverEntity.driver.quit();
+    driverEntity.driver = fetcher.newDriver(0);
+    driverEntity.busy = 0;
+    console.log('Now ' + global.runningDrivers + ' drivers');
+    if (driverEntity.tag == 1) {
+        driverEntity = null;
     }
 }
 
@@ -88,43 +153,12 @@ const seoHandler = (request, response) => {
         response.end(new RespEntity(errorCode, msgContainer.EMPTY_LINK).getEntityStr());
         return;
     }
-    /** Validate url */
-    let validatorOptions = {
-        protocols: ['http', 'https'],
-        require_protocol: true,
-        allow_underscores: true,
-        allow_trailing_dot: true
-    };
-    if (link.indexOf('#') !== -1) {
-        let mainPart = link.split('#')[0];
-        if (!validator.isURL(mainPart, validatorOptions)) {
-            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
-            return;
-        }
-    } else {
-        if (!validator.isURL(link, validatorOptions)) {
-            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
-            return;
-        }
+    if (!urlValidator(link)) {
+        response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+        return;
     }
-    let driverEntity = null;
-    allDrivers.forEach(function (entity, index, array) {
-        if (entity.busy == 0) {
-            driverEntity = entity;
-        }
-    });
+    let driverEntity = grabDriver();
     let finalResponse = null;
-    if (!driverEntity) {
-        if (global.runningDrivers < config.maxDriverNumber) {
-            driverEntity = fetcher.newDriver(1);
-            global.runningDrivers++;
-            console.log('New driver created  - ' + global.runningDrivers + ' drivers here');
-        } else {
-            finalResponse = new RespEntity(errorCode, msgContainer.DRIVER_MAX).getEntityStr();
-            response.end(finalResponse);
-            return;
-        }
-    }
     singleQuery(driverEntity, link, kw).then(optJson => {
         if (!optJson.error) {
             finalResponse = new RespEntity(correctCode, optJson).getEntityStr();
@@ -140,13 +174,7 @@ const seoHandler = (request, response) => {
         return driverEntity;
     }).then((driverEntity) => {
         response.end(finalResponse);
-        driverEntity.driver.quit();
-        driverEntity.driver = fetcher.newDriver(0);
-        driverEntity.busy = 0;
-        console.log('Now ' + global.runningDrivers + ' drivers');
-        if (driverEntity.tag == 1) {
-            driverEntity = null;
-        }
+        cleanUp(driverEntity);
         return 0;
     });
 }
@@ -164,26 +192,17 @@ const brokenHandler = (request, response) => {
         }));
         return;
     }
-    /** Validate url */
-    let validatorOptions = {
-        protocols: ['http', 'https'],
-        require_protocol: true,
-        allow_underscores: true,
-        allow_trailing_dot: true
-    };
-    if (link.indexOf('#') !== -1) {
-        let mainPart = link.split('#')[0];
-        if (!validator.isURL(mainPart, validatorOptions)) {
-            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
-            return;
-        }
-    } else {
-        if (!validator.isURL(link, validatorOptions)) {
-            response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
-            return;
-        }
+    if (!urlValidator(link)) {
+        response.end(new RespEntity(errorCode, msgContainer.WRONG_LINK + link).getEntityStr());
+        return;
     }
-    brokenFetcher(link, response);
+
+    let driverEntity = grabDriver();
+
+    fetcher.brokenFetcher(driverEntity, link).then(output => {
+        let finalResponse = new RespEntity(null , output).getEntityStr();
+        response.end(finalResponse);
+    });
 }
 
 const requestHandler = (request, response) => {

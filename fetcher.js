@@ -8,8 +8,11 @@ var count = require('html-word-count');
 var wordMatcher = require('word-regex');
 var density = require('./density.js');
 const config = require('./configuration.js');
-const rp = require('request-promise');
+let rp = require('request-promise');
 const winston = require('winston');
+const urlobj = require('urlobj')
+const Promise = require('bluebird');
+
 
 let logger = new (winston.Logger)({
     transports: [
@@ -20,6 +23,8 @@ let logger = new (winston.Logger)({
         })
     ]
 });
+
+rp = rp.defaults({timeout : config.singleTimeOut});
 
 /**
  * parse html method
@@ -182,7 +187,167 @@ function checkResponseCode(url) {
     });
 }
 
+/**
+ * fetch html by url
+ * @param driverEntity
+ * @param url
+ * @param kw
+ * @returns {Promise.<TResult>|!ManagedPromise.<R>|*}
+ */
+function fetchHtml(driverEntity, url) {
+    driverEntity.busy = 1;
+    return checkResponseCode(url).then(function (statusCode) {
+        if (statusCode >= 400) {
+            if (statusCode == 999) {
+                return {
+                    error: config.code_siteDown,
+                    message: statusCode
+                }
+            } else {
+                return {
+                    error: config.code_badResponse,
+                    message: statusCode
+                }
+            }
+        }
+        else {
+            let driver = driverEntity.driver;
+            return driver.manage().timeouts().pageLoadTimeout(config.pageLoadTimeout).then(function () {
+                return driver.get(url);
+            }).then(function () {
+                return driver.wait(function () {
+                    return driver.getPageSource().then(function (source) {
+                        var $ = cheerio.load(source);
+                        if (driverEntity.tag == 1) {
+                            driver.quit();
+                            global.runningDrivers--;
+                        }
+                        return source;
+                    });
+                }, 30000);
+            }).catch(function (err) {
+                logger.error(err);
+                return {
+                    error: config.code_unknown,
+                    message: err
+                }
+            });
+        }
+    })
+}
+
+/**
+ * Process some special chars
+ * @param link
+ * @returns {string|XML|void|*}
+ */
+function specialProcessor(link) {
+    return link.replace(/–/g, '%E2%80%93');
+}
+
+function brokenFetcher(driverEntity, link, response) {
+    return fetchHtml(driverEntity, link).then(source => {
+        let $ = cheerio.load(source);
+        let links = [];
+        $('a').each(function (index, element) {
+            let href = specialProcessor($(this).attr('href'));
+            if (href.startsWith('http') || href.startsWith('https')) {
+                let linkObj = {};
+                let relation = urlobj.relation(href, link);
+                linkObj.internal = relation >= urlobj.component.AUTH;
+                linkObj.link = href;
+                links.push(linkObj);
+            }
+        });
+        return links;
+    }).then(links => {
+        //遍历检查所有跳转
+        return Promise.map(links, linkEntity => {
+            let link = linkEntity.link;
+            let opt = {
+                uri: link,
+                simple : false,
+                method: 'HEAD',
+                headers: {
+                    "User-Agent": config.userAgent
+                },
+                resolveWithFullResponse: true
+            }
+            return rp(opt).then(response => {
+                linkEntity.statusCode = response.statusCode;
+            }).catch(headError => {
+                //forget it!
+            });
+
+        }, {concurrency: config.concurrency}).then(() => {
+            return links;
+        })
+    }).then(links => {
+        //处理405
+        return Promise.map(links, linkEntity => {
+            if (linkEntity.statusCode !== 405) {
+                return;
+            }
+            let link = linkEntity.link;
+            let opt = {
+                uri: false,
+                method: 'GET',
+                headers: {
+                    "User-Agent": config.userAgent
+                },
+                resolveWithFullResponse: true
+            }
+            return rp(opt).then(response => {
+                linkEntity.statusCode = response.statusCode;
+            }).catch(getError => {
+                //forget it!
+            });
+
+        }, {concurrency: config.concurrency}).then(() => {
+            return links;
+        })
+    }).then(links => {
+        let internalLinks = [];
+        let externalLinks = [];
+        links.forEach((linkEntity, index, array) => {
+            if (linkEntity.statusCode === 404) {
+                if (linkEntity.internal) {
+                    internalLinks.push({
+                        originalUrl: linkEntity.link,
+                        resolvedUrl: linkEntity.link,
+                        brokenReason: 'HTTP_404'
+                    });
+                } else {
+                    externalLinks.push({
+                        originalUrl: linkEntity.link,
+                        resolvedUrl: linkEntity.link,
+                        brokenReason: 'HTTP_404'
+                    });
+                }
+            }
+        });
+        let internalCount = internalLinks.length;
+        let externalCount = externalLinks.length;
+        let output = {
+            code: 1,
+            brokenInternalLink: {
+                count: internalCount,
+                list: internalLinks
+            },
+            brokenExternalLink: {
+                count: externalCount,
+                list: externalLinks
+            }
+        }
+        return output;
+    }).catch(error => {
+        logger.error(error);
+    });
+}
+
 module.exports = {
     newDriver: createNewDriver,
-    singleQuery: singleQuery
+    singleQuery: singleQuery,
+    parseHtml: parseHtml,
+    brokenFetcher: brokenFetcher
 }

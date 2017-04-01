@@ -22,6 +22,9 @@ let options = {
     requestMethod: config.requestMethod
 }
 
+
+
+
 var htmlUrlChecker = new blc.HtmlUrlChecker(options, {
     html: function (tree, robots, response, pageUrl, customData) {
         /**
