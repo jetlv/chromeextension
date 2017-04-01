@@ -250,7 +250,7 @@ function brokenFetcher(driverEntity, link, response) {
         let $ = cheerio.load(source);
         let links = [];
         $('a').each(function (index, element) {
-            if (!attr('href')) {
+            if (!$(this).attr('href')) {
                 return;
             }
             let href = specialProcessor($(this).attr('href'));
