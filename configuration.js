@@ -19,7 +19,7 @@ module.exports = {
      lets the maximum 60 * 60 = 3600 M
      */
     //***********************seo information collector configuration******************
-    defaultDriverNumber: 2, //Default launched phantomjs browser
+    defaultDriverNumber: 30, //Default launched phantomjs browser
     maxDriverNumber: 60, //Limit number of phantomjs browser
     pageLoadTimeout: 60000,//msec that wait for a page loading
     //**********************Sep line - following are broken-link-chekcer configuration*************************

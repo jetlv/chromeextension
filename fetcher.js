@@ -24,7 +24,7 @@ let logger = new (winston.Logger)({
     ]
 });
 
-rp = rp.defaults({timeout : config.singleTimeOut});
+rp = rp.defaults({timeout: config.singleTimeOut});
 
 /**
  * parse html method
@@ -250,6 +250,9 @@ function brokenFetcher(driverEntity, link, response) {
         let $ = cheerio.load(source);
         let links = [];
         $('a').each(function (index, element) {
+            if (!attr('href')) {
+                return;
+            }
             let href = specialProcessor($(this).attr('href'));
             if (href.startsWith('http') || href.startsWith('https')) {
                 let linkObj = {};
@@ -266,7 +269,7 @@ function brokenFetcher(driverEntity, link, response) {
             let link = linkEntity.link;
             let opt = {
                 uri: link,
-                simple : false,
+                simple: false,
                 method: 'HEAD',
                 headers: {
                     "User-Agent": config.userAgent
